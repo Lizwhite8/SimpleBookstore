@@ -14,7 +14,7 @@ const Book = sequelize.define("Book", {
     image: { 
         type: DataTypes.STRING, 
         allowNull: true,
-        defaultValue: "https://via.placeholder.com/300x400?text=Book+Cover" 
+        defaultValue: "/images/cover/image-1.jpg" // Updated to use local image
     },
     description: {
         type: DataTypes.TEXT,

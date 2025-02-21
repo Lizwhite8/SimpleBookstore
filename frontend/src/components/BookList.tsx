@@ -27,6 +27,71 @@ import { fetchBooks, Book } from '../redux/bookSlice';
 import { fetchCategories } from '../redux/categorySlice';
 import { RootState, AppDispatch } from '../redux/store';
 
+// Book cover image component with fallback
+const BookCover: React.FC<{book: Book}> = ({book}) => {
+  const [imageError, setImageError] = useState(false);
+  
+  // Function to generate a consistent color based on book title
+  const generateColorFromTitle = (title: string): string => {
+    let hash = 0;
+    for (let i = 0; i < title.length; i++) {
+      hash = title.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const color = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return '#' + '00000'.substring(0, 6 - color.length) + color;
+  };
+
+  // Get contrast color for text
+  const getContrastColor = (hexColor: string): string => {
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+    
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? '#000000' : '#FFFFFF';
+  };
+
+  const bgColor = generateColorFromTitle(book.title);
+  const textColor = getContrastColor(bgColor);
+  
+  if (imageError) {
+    return (
+      <Box 
+        sx={{ 
+          height: 300,
+          backgroundColor: bgColor,
+          color: textColor,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 2,
+          textAlign: 'center'
+        }}
+      >
+        <Typography variant="h6" component="div" gutterBottom>
+          {book.title}
+        </Typography>
+        <Typography variant="body2">
+          by {book.author}
+        </Typography>
+      </Box>
+    );
+  }
+  
+  return (
+    <CardMedia
+      component="img"
+      height="300"
+      image={book.image}
+      alt={book.title}
+      sx={{ objectFit: 'cover' }}
+      onError={() => setImageError(true)}
+    />
+  );
+};
+
 export default function BookList(): ReactElement {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -215,13 +280,8 @@ export default function BookList(): ReactElement {
                   }
                 }}
               >
-                <CardMedia
-                  component="img"
-                  height="300"
-                  image={book.image || "https://via.placeholder.com/300x400?text=No+Image"}
-                  alt={book.title}
-                  sx={{ objectFit: 'cover' }}
-                />
+                <BookCover book={book} />
+                
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography gutterBottom variant="h6" component="div" noWrap>
                     {book.title}

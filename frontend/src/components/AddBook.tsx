@@ -14,22 +14,25 @@ import { addBook, BookInput } from '../redux/bookSlice';
 import { fetchCategories } from '../redux/categorySlice';
 import { RootState, AppDispatch } from '../redux/store';
 
-// Generate a colored book cover with the book title as text
-const generateBookCover = (title: string, author: string | undefined): string => {
-  // Generate a color based on the title length
-  const colors = [
-    '87CEEB', 'FFD700', '90EE90', 'FFA07A', 'FFB6C1', 
-    'ADD8E6', 'F08080', 'FFDEAD', 'D8BFD8', 'DDA0DD'
+// Generate a cover image filename based on book title
+const generateCoverImagePath = (title: string): string => {
+  // Try to find an appropriate image from our collection
+  // For simplicity, we'll just select one of the images we have
+  const images = [
+    'image-1.jpg',
+    'image-2.jpg',
+    'image-3.jpg',
+    'image-4.jpg',
+    'image-5.jpg',
+    'image-6.jpg',
+    'image-7.jpg',
+    'lord-of-the-rings.jpg'
   ];
   
-  const colorIndex = title.length % colors.length;
-  const color = colors[colorIndex];
-  
-  // Create the placeholder URL with the book title
-  const formattedTitle = title.replace(/\s+/g, '+');
-  const formattedAuthor = author ? `by+${author.replace(/\s+/g, '+')}` : '';
-  
-  return `https://via.placeholder.com/300x400/${color}/000000?text=${formattedTitle}${formattedAuthor ? '%0A' + formattedAuthor : ''}`;
+  // Use title length as a crude way to select an image
+  // In a real app, you might match by genre or other metadata
+  const imageIndex = title.length % images.length;
+  return `/images/cover/${images[imageIndex]}`;
 };
 
 export default function AddBook(): ReactElement {
@@ -54,13 +57,13 @@ export default function AddBook(): ReactElement {
       return;
     }
     
-    // Generate a custom book cover based on title and author
-    const bookCover = generateBookCover(book.title, book.author);
+    // Generate a local book cover path instead of using an external service
+    const bookCoverPath = generateCoverImagePath(book.title);
     
-    // Add the book with the generated image
+    // Add the book with the local image path
     dispatch(addBook({ 
       ...book, 
-      image: bookCover,
+      image: bookCoverPath,
       // If no description, it will use the default from the backend
     }));
     

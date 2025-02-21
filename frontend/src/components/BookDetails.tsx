@@ -27,6 +27,58 @@ interface RouteParams {
   [key: string]: string;
 }
 
+// Fallback cover generator function
+const generateFallbackCover = (title: string, author: string): ReactElement => {
+  // Generate a deterministic background color based on title
+  const getColor = (str: string): string => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const color = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return '#' + '00000'.substring(0, 6 - color.length) + color;
+  };
+
+  // Get contrast color for text
+  const getContrastColor = (hexColor: string): string => {
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+    
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? '#000000' : '#FFFFFF';
+  };
+
+  const bgColor = getColor(title);
+  const textColor = getContrastColor(bgColor);
+
+  return (
+    <Box 
+      sx={{ 
+        width: '100%', 
+        height: '100%', 
+        minHeight: 400,
+        backgroundColor: bgColor,
+        color: textColor,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 3,
+        textAlign: 'center'
+      }}
+    >
+      <Typography variant="h4" component="div" gutterBottom>
+        {title}
+      </Typography>
+      <Typography variant="h6">
+        by {author}
+      </Typography>
+    </Box>
+  );
+};
+
 export default function BookDetails(): ReactElement {
   const { id } = useParams<RouteParams>() as RouteParams;
   const navigate = useNavigate();
@@ -38,6 +90,7 @@ export default function BookDetails(): ReactElement {
   }, [dispatch, id]);
 
   const { currentBook, status } = useSelector((state: RootState) => state.books);
+  const [imageError, setImageError] = React.useState(false);
 
   if (status === 'loading') {
     return (
@@ -79,19 +132,30 @@ export default function BookDetails(): ReactElement {
     }
   };
 
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto', my: 3 }}>
       <Card sx={{ display: { md: 'flex' }, mb: 4 }}>
-        <CardMedia
-          component="img"
-          sx={{ 
-            width: { xs: '100%', md: 300 },
-            height: { xs: 400, md: 'auto' },
-            objectFit: 'cover'
-          }}
-          image={currentBook.image || "https://via.placeholder.com/300x400?text=No+Image"}
-          alt={currentBook.title}
-        />
+        {!imageError ? (
+          <CardMedia
+            component="img"
+            sx={{ 
+              width: { xs: '100%', md: 300 },
+              height: { xs: 400, md: 'auto' },
+              objectFit: 'cover'
+            }}
+            image={currentBook.image}
+            alt={currentBook.title}
+            onError={handleImageError}
+          />
+        ) : (
+          <Box sx={{ width: { xs: '100%', md: 300 } }}>
+            {generateFallbackCover(currentBook.title, currentBook.author)}
+          </Box>
+        )}
         <CardContent sx={{ flex: '1 1 auto', p: 4 }}>
           <Typography variant="h4" component="div" gutterBottom>
             {currentBook.title}
